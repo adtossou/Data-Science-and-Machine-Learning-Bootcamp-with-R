@@ -1,0 +1,341 @@
+---
+title: 'Machine Learning with R: Logistic Regression'
+author: "Armand Tossou"
+date: "9/6/2021"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+# add this line to avoid errors in compilation. See: https://stackoverflow.com/questions/30519673/cant-resolve-error-in-rmd-file-anonymous-withcallinghandlers-withvisi
+knitr::opts_chunk$set(error = TRUE)
+```
+
+
+For this lecture we will be working with the [Titanic Data Set from Kaggle](https://www.kaggle.com/c/titanic). This is a very famous data set and very often is a student's first step in machine learning! We'll be trying to predict a classification- survival or deceased.
+
+Let's begin our understanding of implementing Logistic Regression in R for classification.
+
+We'll use a "semi-cleaned" version of the titanic data set, if you use the data set hosted directly on Kaggle, you may need to do some additional cleaning not shown in this lecture notebook.
+
+
+
+## The Data
+
+We can begin by loading in our training data into data frames:
+
+
+```{r}
+# load the dataset
+df.train <- read.csv('C:/Users/adtos/Dropbox/Data_Science/R programming/Data Science and Machine Learning Bootcamp with R/R-Course-HTML-Notes/R-for-Data-Science-and-Machine-Learning/Machine Learning with R/titanic_train.csv')
+
+# preview the data
+head(df.train)
+
+```
+
+
+Get a summary of the data:
+
+
+```{r}
+summary(df)
+```
+
+
+## Exploratory Data Analysis (EDA)
+
+Let's explore how much missing data we have, we can use the `Amelia` pacakge for this. Install it if you want to follow along, you'll need to install it later for your logistic regression project.
+
+
+```{r}
+# install the Amelia library
+#install.packages("Amelia")
+
+# call the Amelia library
+library(Amelia)
+
+# plot a map of missing values
+missmap(df.train, main="Titanic Training Data - Missings Map", 
+        col=c("yellow", "black"), legend=FALSE)
+
+```
+
+Roughly 20 percent of the Age data is missing. The proportion of Age "missings" is likely small enough for reasonable replacement with some form of imputation.
+
+Let's continue on by visualizing some of the data.
+
+
+### Data Visualization with ggplot2
+
+
+
+```{r}
+# load necessary library
+library(ggplot2)
+
+# create a barplot of 'Survived'
+ggplot(df.train,aes(Survived)) + geom_bar()
+
+```
+
+
+Also create a barplot of 'PClass'.
+
+
+```{r}
+ggplot(df.train,aes(Pclass)) + geom_bar(aes(fill=factor(Pclass)),alpha=0.5)
+
+```
+
+Create a barplot of 'Sex'.
+
+
+```{r}
+ggplot(df.train,aes(Sex)) + geom_bar(aes(fill=factor(Sex)),alpha=0.5)
+
+```
+
+Create a histogram of 'Age'.
+
+
+```{r}
+ggplot(df.train,aes(Age)) + geom_histogram(fill='blue',bins=20,alpha=0.5)
+
+```
+
+Create a barplot of 'SibSp'.
+
+
+```{r}
+ggplot(df.train,aes(SibSp)) + geom_bar(fill='red',alpha=0.5)
+
+```
+
+Create a histogram of 'Fare'.
+
+
+```{r}
+ggplot(df.train,aes(Fare)) + geom_histogram(fill='green',color='black',alpha=0.5)
+
+```
+
+
+## Data Cleaning
+
+We want to fill in missing age data instead of just dropping the missing age data rows. One way to do this is by filling in the mean age of all the passengers (i.e., imputation).
+
+However, we can be smarter about this and check the average age by passenger class. For example:
+
+
+```{r}
+pl <- ggplot(df.train,aes(Pclass,Age)) + geom_boxplot(aes(group=Pclass,fill=factor(Pclass),alpha=0.4)) 
+pl + scale_y_continuous(breaks = seq(min(0), max(80), by = 2))
+
+```
+
+
+We can see the wealthier passengers in the higher classes tend to be older, which makes sense. We'll use these average age values to impute based on Pclass for Age. 
+
+Let's create a function to use for imputation:
+
+```{r}
+impute_age <- function(age,class){
+    out <- age
+    for (i in 1:length(age)){
+        
+        if (is.na(age[i])){
+
+            if (class[i] == 1){
+                out[i] <- 37
+
+            }else if (class[i] == 2){
+                out[i] <- 29
+
+            }else{
+                out[i] <- 24
+            }
+        }else{
+            out[i]<-age[i]
+        }
+    }
+    return(out)
+}
+
+```
+
+
+Now, let's apply the imputation function:
+
+```{r}
+fixed.ages <- impute_age(df.train$Age,df.train$Pclass)
+
+```
+
+
+Replace 'Age' in the training dataset with the imputed version:
+
+
+```{r}
+df.train$Age <- fixed.ages
+
+```
+
+
+Now let's check to see if our imputation approach for missing values worked. We plot the 'missmap' again using the `Amelia` package:
+
+
+```{r}
+missmap(df.train, main="Titanic Training Data - Missings Map", 
+        col=c("yellow", "black"), legend=FALSE)
+
+```
+
+Great let's continue with building our model!
+
+## Building a Logistic Regression Model
+
+Now it is time to build our model! Let's begin by doing a final "clean-up" of our data by removing the features we won't be using and making sure that the features are of the correct data type. 
+
+First, let's check the structure of our data:
+
+```{r}
+str(df.train)
+
+```
+
+Let's remove what we won't use:
+
+
+```{r}
+head(df.train,3)
+
+```
+
+Let's select the relevant columns for training:
+
+
+```{r}
+# load the 'dplyr' library
+library(dplyr)
+
+```
+
+
+We'll exclude these 4 columns from our analysis: 
+- PassengerId, 
+- Name, 
+- Ticket,
+- Cabin
+
+
+```{r}
+df.train <- select(df.train,-PassengerId,-Name,-Ticket,-Cabin)
+
+head(df.train,3)
+
+```
+
+Now let's set factor columns.
+
+
+```{r}
+df.train$Survived <- factor(df.train$Survived)
+df.train$Pclass <- factor(df.train$Pclass)
+df.train$Parch <- factor(df.train$Parch)
+df.train$SibSp <- factor(df.train$SibSp)
+
+```
+
+
+Check to make sure the column types are correct:
+
+
+```{r}
+str(df.train)
+
+```
+
+
+## Train the Model
+
+Now let's train the model!
+
+
+```{r}
+# fit the model
+log.model <- glm(formula=Survived ~ . , family = binomial(link='logit'),data = df.train)
+
+# get summary
+summary(log.model)
+
+```
+
+We can see clearly that Sex,Age, and Class are the most significant features. This makes sense, given the women and children first policy.
+
+
+## Predicting using Test Cases
+
+Let's make a test set out of our training set, retrain on the smaller version of our training set and check it against the test subset.
+
+
+```{r}
+library(caTools)
+set.seed(101)
+
+split = sample.split(df.train$Survived, SplitRatio = 0.70)
+
+final.train = subset(df.train, split == TRUE)
+final.test = subset(df.train, split == FALSE)
+
+```
+
+
+Now let's rerun our model on only our final training set:
+
+
+```{r}
+# fit the model
+final.log.model <- glm(formula=Survived ~ . , family = binomial(link='logit'), data = final.train)
+
+# get model summary
+summary(final.log.model)
+
+```
+
+Now let's check our prediction accuracy!
+
+
+```{r}
+fitted.probabilities <- predict(final.log.model,newdata=final.test,type='response')
+
+```
+
+
+Now let's calculate from the predicted values:
+
+
+```{r}
+fitted.results <- ifelse(fitted.probabilities > 0.5,1,0)
+
+```
+
+
+And let's compute the accuracy score for the model:
+
+
+```{r}
+misClasificError <- mean(fitted.results != final.test$Survived)
+print(paste('Accuracy',1-misClasificError))
+
+```
+
+Looks like we were able to achieve around 80% accuracy, where as random guessing would have just been 50% accuracy. Let's see the confusion matrix:
+
+
+```{r}
+table(final.test$Survived, fitted.probabilities > 0.5)
+
+```

@@ -1,0 +1,445 @@
+---
+title: "R data frame"
+author: "Armand Tossou"
+date: "9/3/2021"
+output:
+  pdf_document: default
+  html_document: default
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Sample public data set (data frame), built into R
+
+-   The `state.x77` data set.
+-   The `USPersonalExpenditure` data set.
+-   The `women` data set.
+-   The `WorldPhones` data set.
+
+```{r }
+state.x77
+
+USPersonalExpenditure
+
+women
+
+WorldPhones
+
+data() # list of all data sets built in R
+
+# preview the first 6 rows of the 'state.x77' data set
+head(state.x77)
+
+
+# preview the last 6 rows of the 'state.x77' data set
+tail(state.x77)
+
+# get the structure of the 'state.x77' data set
+str(state.x77)
+
+# summary statistics of variables in the 'state.x77' data set
+summary(state.x77)
+
+```
+
+## Create our own data frame
+
+We'll create weather data.
+
+```{r }
+days <- c('Mon','Tue','Wed','Thu','Fri') # weekdays
+temp <- c(22.2,21,23,24.3,25) # daily temperature
+rain <- c(T,T,F,F,T) # whether or not it rained on a given day
+
+# combine those matrices into a data frame
+df <- data.frame(days,temp,rain)
+df
+
+# check the structure of the newly created data frame
+str(df)
+
+#get summary of each variable
+summary(df)
+```
+
+## Selecting and Indexing Data Frame Elements
+
+```{r }
+# select everything from the first row
+df[1,]
+
+# select everything from the first column
+df[,1]
+
+## We can also index using column and row labels
+
+# select everything from the 'rain' column
+df[,'rain']
+class(df[,'days']) # character
+
+# select first 5 rows in columns 'days' and 'temp'
+df[1:5,c('days','temp')]
+
+## grab all the values of a particular column
+
+# using the '$' notation 
+df$days # R returns a vector
+class(df$'days') # data frame
+
+# using bracket notation 
+df['days'] # R returns a data frame
+class(df['days']) # character
+
+## using the `subset()` function for selection
+
+# find out days where it rained 
+subset(df, subset = rain==T) # one option
+subset(df,df$rain==T) # an alternative
+
+# grab days where the temperature was greater than 23 degrees
+subset(df, subset = temp > 23)
+
+## sorting a data frame. Use the `order()` function
+
+# sorting daily temperatures in accenting order
+sorted.temp <- order(df['temp']) # this is a mask containing row indices
+sorted.temp
+
+df[sorted.temp,] # apply mask. We sort the data frame in 
+
+# Now let's sort the data frame in descending order
+desc.temp <- order(-df['temp'])
+df[desc.temp,] # apply mask
+
+```
+
+---
+## Overview of Data Frame Operations
+---
+
+Here we'll cover the following: - Creating data frames - Importing and
+exporting data - Getting information about a data frame - Referencing
+cells - Referencing rows - Referencing columns - Adding rows - Adding
+columns - Setting column names - Selecting multiple columns - Dealing
+with missing data
+
+### Creating data frames
+
+```{r }
+
+# create an empty dataframe 
+empty <- data.frame()
+
+# create a dataframe from vectors
+
+c1 <- 1:10 # numbers, 1 through 10
+letters # the letters of the alphabet. They're built into R
+c2 <- letters[1:10] # create a vector of the first 10 letters of the alphabet
+c2
+
+# combine c1 and c2 into a dataframe
+
+df <- data.frame(c1,c2) # without column names assigned
+df
+
+df <- data.frame(col.name.1=c1,col.name.2=c2) # assign each column a name
+df
+
+
+```
+
+### Importing and exporting data
+
+```{r }
+
+# to write a .csv file 
+## this saves the last dataframe (i.e., df) to our working directory
+## this also saves our index column as a separate column
+write.csv(df, file = 'saved_df.csv')
+
+#  reading a .csv file into R
+df2 <- read.csv('saved_df.csv')
+df2
+
+```
+
+### Getting information about a data frame
+
+```{r }
+# find out the numbers of rows and columns
+nrow(df)
+ncol(df)
+
+# find out the names of rows and columns
+colnames(df)
+rownames(df) # these are the indices too
+
+# get the structure of the dataframe
+str(df)
+
+# get a summary of the dataframe
+summary(df)
+
+```
+
+### Referencing cells
+
+```{r }
+# reference a cell in the dataframe, in row 5 and column 2
+df[[5,2]] # just using row and column indices
+df[[5,'col.name.2']] # by using the column name
+
+# change a value in the dataframe
+df[[2,'col.name.1']] <- 9999 # change value 2 at the intersection of row 2 and column 1
+df
+
+```
+
+### Referencing rows
+
+```{r }
+df[1,] # show row 1. Returns a dataframe
+class(df[1,]) # "data.frame"
+
+as.numeric(df[1,]) # show row 1. Returns a vector instead of a dataframe
+class(as.numeric(df[1,])) # "numeric"
+
+```
+
+### Referencing columns
+
+```{r }
+head(mtcars) # check out this built-in dataframe
+
+# 4 ways to grab the 'mpg' column as a vector
+mtcars$mpg
+
+mtcars[,'mpg']
+
+mtcars[,1] # 'mpg' is the first column
+
+mtcars[['mpg']]
+
+# 2 ways to grab the 'mpg' column as a dataframe
+mtcars['mpg']
+
+mtcars[1] # same result using the index/order of the column
+
+## selecting multiple columns as a dataframe
+head(mtcars[c('mpg','disp')])
+
+```
+
+### Adding rows
+
+```{r }
+# create a new dataframe
+df2 <- data.frame(col.name.1 = 2000, col.name.2 = 'new')
+df2
+
+# combine this last dataframe into an existing one
+dfnew <- rbind(df,df2)
+dfnew[11,] # preview the 11th row in the dataframe
+
+```
+
+### Adding columns
+
+```{r }
+# add a new column to 'df' that's twice the values in column 'col.name.1'
+df$newcol <- 2*df$col.name.1
+df
+
+# alternative approach
+df['newcol.copy'] <- df$newcol
+df
+
+```
+
+### Setting column names
+
+```{r }
+# retrive column names of the 'df' dataframe
+colnames(df)
+
+# rename the columns
+colnames(df) <- c('1','2','3','4')
+df
+
+# rename a specific column in the dataframe
+colnames(df)[1] <- c('NEW COL NAME')
+df
+
+```
+
+### Selecting multiple ROWS
+
+```{r }
+# SELECT FIRST 10 ROWS
+df[1:10,]
+
+# using the head() method, select first 7 rows
+head(df,7)
+
+# select everything but row 2
+df[-2,]
+
+## conditional selecting
+head(mtcars) # use the 'mtcars' built-in dataset
+
+# select on rows where 'mpg' is greater than 20
+mtcars[mtcars$mpg > 20, ]
+
+# using multiple conditions
+mtcars[ (mtcars$mpg>20 & mtcars$cyl==6), ]
+mtcars[ (mtcars$mpg>20 & mtcars$cyl==6), c('mpg','cyl','hp')]
+
+## using the subset() function
+subset(mtcars, (mpg>20 & cyl==6) )
+
+```
+
+### Selecting multiple columns
+
+```{r }
+# select multiple columns from 'mtcars'
+mtcars[,c(1,2,3)] # first 3 columns
+mtcars[,c('mpg','cyl','disp')]
+
+```
+
+### Dealing with missing data
+
+```{r }
+sum(is.na(df)) # get booleans
+
+any(is.na(df)) # get a single FALSE/TRUE boolean for whether we have at leat 1 case of missing values
+
+sum(is.na(df)) # get total number of missing values
+
+## replace all NULL values with zero
+df[is.na(df)] <- 0
+
+## replace missing values in column 'mpg' of built-in dataset 'mtcars' by the column mean
+mtcars$mpg[is.na(mtcars$mpg)] <- mean(mtcars$mpg)
+
+```
+
+## 
+
+```{r }
+
+
+
+```
+
+---
+## Data Frame Training Exercise
+---
+
+Ex 1: Recreate the following dataframe by creating vectors and using the
+data.frame function:
+
+```{r }
+Ages <- c(22,25,26)
+Weight <- c(150,165,120)
+Sex <- c('M','M','F')
+
+mydf <- data.frame(Ages, Weight, Sex, row.names = c('Sam','Frank','Amy'))
+mydf
+
+```
+
+Ex 2: Check if mtcars is a dataframe using is.data.frame()
+
+```{r }
+is.data.frame(mtcars)
+
+```
+
+Ex 3: Use as.data.frame() to convert a matrix into a dataframe:
+
+```{r }
+mat <- matrix(1:25,nrow = 5)
+df_mat <- as.data.frame(mat)
+df_mat
+
+```
+
+Ex 4: Set the built-in data frame mtcars as a variable df. We'll use
+this df variable for the rest of the exercises.
+
+```{r }
+
+df <- mtcars
+df
+
+```
+
+Ex 5: Display the first 6 rows of df
+
+```{r }
+head(df,6)
+
+# df[1:6,] # alternatively
+
+```
+
+Ex 6: What is the average mpg value for all the cars?
+
+```{r }
+
+mean(df$mpg)
+
+```
+
+Ex 7: Select the rows where all cars have 6 cylinders (cyl column)
+
+```{r }
+
+df[df$cyl == 6,]
+
+```
+
+Ex 8: Select the columns am,gear, and carb.
+
+```{r }
+
+df[ , c('am','gear','carb')]
+
+# subset(df, select = c(am, gear, carb)) # alternative approach
+```
+
+Ex 9: Create a new column called performance, which is calculated by
+hp/wt.
+
+```{r }
+
+df$performance <- df$hp / df$wt
+head(df)
+
+```
+
+Ex 10: Your performance column will have several decimal place
+precision. Figure out how to use round() (check help(round)) to reduce
+this accuracy to only 2 decimal places.
+
+```{r }
+
+df$performance <- round(df$hp / df$wt, 2)
+head(df)
+
+```
+
+Ex 11: What is the mpg of the Hornet Sportabout?
+
+```{r }
+
+df[['Hornet Sportabout', 'mpg']]
+
+```

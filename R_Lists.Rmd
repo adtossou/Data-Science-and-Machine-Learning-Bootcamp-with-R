@@ -1,0 +1,64 @@
+---
+title: "R Lists"
+author: "Armand Tossou"
+date: "9/4/2021"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## 
+
+
+```{r}
+
+# let's create a vector, a matrix and a dataframe
+v <- c(1,2,3)
+m <- matrix(1:10, nrow = 2)
+df <- mtcars
+
+class(v)
+
+class(m)
+
+class(df)
+
+# create a list with all the above
+my.list <- list(v, m, df)
+my.list
+
+# assign names to headers
+my.named.list <- list(sample_vec = v, my.matrix = m, sample.df = df)
+my.named.list
+
+# call elements form the list
+my.named.list$sample.df
+
+my.named.list[1] # call first elemeent
+
+my.named.list['sample_vec']
+
+# what data type is this?
+class(my.named.list['sample_vec']) # "list"
+
+class(my.named.list$sample_vec) # "numeric"
+
+class(my.named.list$sample.df) # "data.frame"
+
+# grab the actual values
+my.named.list[['sample_vec']]
+class(my.named.list[['sample_vec']]) # "numeric"
+
+# make a list of a list
+double.list <- c(my.named.list, my.named.list)
+double.list
+
+# getting information on the list
+str(my.named.list)
+
+```
+

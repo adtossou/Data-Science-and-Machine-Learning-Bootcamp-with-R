@@ -1,0 +1,209 @@
+---
+title: "Data Input and Output with R"
+author: "Armand Tossou"
+date: "9/4/2021"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+# add this line to avoid errors in compilation. See: https://stackoverflow.com/questions/30519673/cant-resolve-error-in-rmd-file-anonymous-withcallinghandlers-withvisi
+knitr::opts_chunk$set(error = TRUE)
+```
+
+## CSV Input and Output
+
+CSV stands for 'comma-separated values '.
+
+```{r}
+# create a sample CSV file using the built-in 'mtcars' dataset
+write.csv(mtcars, file = 'my_example.csv')
+
+# reading in a .csv file
+ex <- read.csv('my_example.csv')
+
+# preview the file
+head(ex)
+tail(ex)
+
+```
+
+## Check system info
+
+There is a new library called readxl and writexl which are really easy to install and use, you can check them out here: <https://readxl.tidyverse.org/>
+
+The older library shown in the video requires Java to be installed, also with the RJava library.
+
+```{r}
+# Check whether R is 32/64 bit with sessionInfo(). Check Platform.
+sessionInfo()
+
+# Download the specific 32/64 bit of Java. This is really important. R and Java must have the same memory signature, either 32 or 64 bit. I had 64 bit so I downloaded the Offline 64-bit version from here: https://www.java.com/en/download/manual.jsp
+
+# Download Java JDK for 32/64 bit. For 64-bit I had to download the Windows version from here: https://www.oracle.com/java/technologies/javase-downloads.html
+
+# Install rJava with:
+
+install.packages("rJava")
+
+# Set your JAVA_HOME environment with Sys.setenv(JAVA_HOME="C:/Program Files/Java/jdk-10.0.1/") so that it points to your specific (64-bit in my case) folder that contains the jdk. Don’t worry about jdk-10.0.1 as this might change for future releases.
+# Note on JDK (Java SE Development Kit): For Java Developers. Includes a complete JRE plus tools for developing, debugging, and monitoring Java
+
+Sys.setenv(JAVA_HOME="C:/Program Files/Java/jdk-10.0.1/")
+
+# check for errors after running this
+
+library(rJava)
+```
+
+## Excel Files with R
+
+We'll install packages that allow us to work with Excel within \`R\` and \`Rstudio\`.
+
+```{r}
+
+# install the 'readxl' library
+
+install.packages("readxl")
+
+# load the package
+library(readxl)
+
+
+# import a sample sales data Excel file
+## Note: the excel file was downloaded from Kaggle at this address: https://www.kaggle.com/kyanyoga/sample-sales-data
+# we manually split its 25 columns into 2 sheets, with 'ORDERNUMBER' as the unique identifier
+excel_sheets('Sample_Sales_Data_Kaggle.xlsx')
+df <- read_excel('Sample_Sales_Data_Kaggle.xlsx', sheet = 'Sheet1')
+head(df)
+
+# check total sales
+sum(df$MSRP)
+
+# summary statistics
+summary(df)
+
+
+## Let's download the entire workbook into R, with both of its sheets
+
+entire.workbook <- lapply(excel_sheets('Sample_Sales_Data_Kaggle.xlsx'), read_excel, path='Sample_Sales_Data_Kaggle.xlsx')
+
+head(entire.workbook)
+
+entire.workbook
+
+
+## writing to Excel files
+
+# we first need to install the 'xlsx' package
+install.packages('xlsx')
+
+library(xlsx) # call the library
+
+# let's write the built-in 'mtcars' dataframe to Excel
+head(mtcars)
+write.xlsx(mtcars, "output_example.xlsx")
+
+```
+
+## SQL with R
+
+This will actually be a brief lecture, because connecting R to a SQL database is completely dependent on the type of database you are using (MYSQL, Oracle, etc.).
+
+So instead of trying to cover all of these (since each requires a different package), we'll use this lecture to point you in the right direction for various database types. Once you've downloaded the correct library, actually connecting is usually quite simple. It's then just a matter of passing SQL queries through R.
+
+We'll show a general version using the `DBI` package, then point to more specific resources.
+
+### RODBC - General Use
+
+The RODBC (<https://cran.r-project.org/web/packages/RODBC/RODBC.pdf>) library is one way of connecting to databases. Regardless of what you decide to use, I highly recommend a Google search consisting of 'your database of choice + R' . Here's an example use of RODBC.
+
+```{r}
+# install the RODBC package
+install.packages("RODBC")
+
+# RODBC example of syntax
+library(RODBC)
+
+myconn <- odbcConnect("Database_name", uid="User_ID", pws="password")
+dat <- sqlFetch(myconn, "Table_Name")
+querydat <- sqlQuery(myconn, "SELECT * FROM table")
+
+```
+
+### MySQL
+
+The RMySQL (<https://cran.r-project.org/web/packages/RMySQL/index.html>) package provides an interface to MySQL.
+
+### Oracle
+
+The ROracle (<https://cran.r-project.org/web/packages/ROracle/index.html>) package provides an interface for Oracle.
+
+### JDBC
+
+The RJDBC (<https://cran.r-project.org/web/packages/RJDBC/index.html>) package provides access to databases through a JDBC interface.
+
+## PostgreSQL
+
+The RPostgreSQL (<https://cran.r-project.org/web/packages/RPostgreSQL/index.html>) package provides access to databases through a PostgreSQL interface..
+
+Again, Google is the best way to go for your personal situation, since databases and your permissions can differ a lot!
+
+For instance, you can check out the website <http://www.r-bloggers.com> for tutorials. Here's an example on how to connect to SQL through RPostgreSQL: <https://www.r-bloggers.com/2015/05/getting-started-with-postgresql-in-r/>.
+
+------------------------------------------------------------------------
+
+## Web Scraping with R
+
+------------------------------------------------------------------------
+
+NOTE: TO FULLY UNDERSTAND THIS LECTURE, YOU WILL NEED TO KNOW HTML AND CSS. YOU WILL ALSO NEED TO KNOW THE PIPE OPERATOR IN R (%\>%). COME BACK TO THIS LECTURE AFTER REVIEWING THAT MATERIAL.
+
+Web Scraping in general is almost always going to be unique to your personal use case. This is because every website is different. Updates occur and things can change. To fully understand webscraping in R, you'll need to understand HTML and CSS in order to know what you are trying to grab off the website.
+
+If you don't know HTML or CSS, you may be able to use an auto-web-scrape tool, like import.io (<https://www.import.io/>). Check it out; it will auto scrape and create a .csv file for you.
+
+### `rvest` library
+
+Below is a simple example of using `rvest`, but the best way to see a good demo of `rvest` is through the built-in demos by using:
+
+```{r}
+demo(package = 'rvest')
+```
+
+Now, if you are familiar with HTML and CSS, a very useful library is `rvest`. Below, we'll go over a simple example from RStudio:
+
+```{r}
+# Will also install dependencies
+install.packages('rvest')
+```
+
+Imagine we'd like to scrape some information about The Lego Movie from IMDB. We start by downloading and parsing the file with `html()`:
+
+```{r}
+library(rvest)
+lego_movie <- read_html("http://www.imdb.com/title/tt1490017/")
+```
+
+To extract the rating, we start with `SelectGadget` to figure out which CSS selector matches the data we want: strong span. If you haven't heard of `SelectGadget`, make sure to read about it at <https://selectorgadget.com/>. It's the easiest way to determine which selector extracts the data that you're interested in.
+
+We use `html_node()` to find the first node that matches that selector, extract its contents with `html_text()`, and convert it to numeric with `as.numeric()`:
+
+```{r}
+lego_movie %>%
+  html_node("strong span") %>%
+  html_text() %>%
+  as.numeric()
+```
+
+We use a similar process to extract the cast, using `html_nodes()` to find all nodes that match the selector.
+
+```{r}
+lego_movie %>%
+  html_node("#titleCast .itemprop span") %>%
+  html_text()
+```
+
+Alright, hopefully this lecture gives you some good resources and ideas in case you want to webscrape with R in the future!

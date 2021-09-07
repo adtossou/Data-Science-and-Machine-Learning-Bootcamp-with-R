@@ -1,0 +1,80 @@
+---
+title: "Interactive Visualizations with Plotly"
+author: "Armand Tossou"
+date: "9/6/2021"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+# add this line to avoid errors in compilation. See: https://stackoverflow.com/questions/30519673/cant-resolve-error-in-rmd-file-anonymous-withcallinghandlers-withvisi
+knitr::opts_chunk$set(error = TRUE)
+```
+
+## Some resources
+
+Resources and Links for Plotly and ggplot2.
+
+
+Here are the links for the resources mentioned in this lecture:
+
+[Plotly:](https://plot.ly/)
+
+https://plot.ly
+
+
+Package to install:
+
+`install.packages('plotly')`
+
+
+[Reference for gglotly() examples:](https://plot.ly/ggplot2/)
+
+https://plot.ly/ggplot2/
+
+
+[Reference for full ggplotly example documentation:](http://ropensci.github.io/plotly-test-table/tables/0e3d5ca144d27d8416318824c1b6ec1421a51045/index.html)
+
+http://ropensci.github.io/plotly-test-table/tables/0e3d5ca144d27d8416318824c1b6ec1421a51045/index.html
+
+
+## Background
+
+We can use the open source library called 'plotly' to convert our ggplot2 graphics into interactive images.
+
+Let's install the 'plotly' library and call all necessary libraries for our project:
+
+```{r}
+# install.packages("plotly")
+
+# call the libraries
+library(ggplot2)
+library(plotly)
+
+```
+
+
+## Create a ggplot2 plot
+
+Let's create a scatterplot from the 'mtcars' built-in dataset.
+
+```{r}
+pl <- ggplot(mtcars,aes(mpg,wt)) + geom_point()
+pl
+
+```
+
+
+## Create an interactive plot
+
+Use `ggplotly()` to convert the non-interactive plot into an interactive one.
+
+
+```{r}
+gpl <- ggplotly(pl)
+gpl
+```
+
+## Refer to the online documentation on 'ggplotly' for sample codes and examples of various statistical charts.

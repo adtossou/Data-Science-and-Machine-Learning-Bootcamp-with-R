@@ -1,0 +1,884 @@
+---
+title: "Data Visualization with R"
+author: "Armand Tossou"
+date: "9/6/2021"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+## Grammar of Graphics with ggplot2
+
+Each `ggplot2` plot has 3 basic layers:
+- a data layer
+- an aesthetics layer
+- and a geometries layer
+
+Additional layers include:
+- facets: to put multiple plots on the same canvas
+- statistics: 
+- coordinates
+- and a theme
+
+
+```{r}
+#load the package
+library(ggplot2)
+
+# create a scatterplot 
+pl <- ggplot(data=mtcars,aes(x=mpg,y=hp))
+pl + geom_point()
+
+```
+
+Adding facets:
+
+
+```{r}
+# create a scatterplot for each cylendar type
+pl <- ggplot(data=mtcars,aes(x=mpg,y=hp)) + geom_point()
+pl + facet_grid(cyl ~ .)
+
+```
+
+Let's add a statistics layer:
+
+
+```{r}
+# create a scatterplot for each cylendar type, adding a smoothed line of fit
+pl <- ggplot(data=mtcars,aes(x=mpg,y=hp)) + geom_point()
+pl + facet_grid(cyl ~ .) + stat_smooth()
+
+```
+
+Next, let's add coordinates to our plot.
+
+
+```{r}
+# create a scatterplot for each cylendar type, adding a smoothed line of fit, and adding coordinates
+pl <- ggplot(data=mtcars,aes(x=mpg,y=hp)) + geom_point()
+pl2 <- pl + facet_grid(cyl ~ .) + stat_smooth()
+pl2 + coord_cartesian(xlim = c(15,25))
+
+```
+
+Finally, let's add a theme to our plot.
+
+
+```{r}
+
+# create a scatterplot for each cylendar type, adding a smoothed line of fit, 
+# and adding coordinates, and adding a theme
+pl <- ggplot(data=mtcars,aes(x=mpg,y=hp)) + geom_point()
+pl2 <- pl + facet_grid(cyl ~ .) + stat_smooth()
+pl2 + coord_cartesian(xlim = c(15,25)) + theme_bw()
+
+```
+
+---
+## Histograms
+---
+
+RStudio ggplot cheat sheet: 
+https://www.maths.usyd.edu.au/u/UG/SM/STAT3022/r/current/Misc/data-visualization-2.1.pdf
+
+
+```{r}
+# install.packages("ggplot2")
+library(ggplot2)
+
+# install the dataset we'll be working with
+#install.packages("ggplot2movies")
+library(ggplot2movies)
+
+# show the columns of the 'movies' dataset
+colnames(movies)
+```
+
+
+Start out by plotting a basic histogram:
+
+```{r}
+# data & aesthetics
+pl <- ggplot(movies,aes(x=rating))
+
+# geometry
+pl2 <- pl + geom_histogram(binwidth = 0.1, color='red',fill='pink',alpha=0.4)
+
+# add labels
+pl3 <- pl2 + xlab('Movie Ratings') + ylab('Count')
+
+print(pl3)
+
+```
+
+There are also some advanced options that we can apply to the geometry layer.
+
+
+```{r}
+pl <- ggplot(movies,aes(x=rating))
+
+pl2 <- pl + geom_histogram(binwidth = 0.1,aes(fill=..count..))
+
+pl3 <- pl2 + xlab('Movie Ratings') + ylab('Count')
+
+print(pl3)
+
+```
+
+
+---
+## Scatterplots
+---
+
+
+```{r}
+# we'll use the built-in 'mtcars' dataframe to plot mile per galon by car weight
+df <- mtcars
+
+# data & aesthetics
+pl <- ggplot(df,aes(x=wt,y=mpg))
+
+# geometry
+print(pl + geom_point())
+
+```
+
+Now let's improve upon our scatterplot by playing around with:
+- the size of points
+- transparency
+
+
+```{r}
+# data & aesthetics
+pl <- ggplot(df,aes(x=wt,y=mpg))
+
+# geometry
+pl2 <- pl + geom_point(size=10,alpha=0.5)
+
+print(pl2)
+
+```
+
+We can size points in our scartterplot with other features in the dataset:
+
+
+```{r}
+# data & aesthetics
+pl <- ggplot(df,aes(x=wt,y=mpg))
+
+# geometry
+pl2 <- pl + geom_point(size=mtcars$cyl,alpha=0.5) # sizing points based on the number of car 'cylinders'
+
+print(pl2)
+
+```
+
+Pass the aesthetics parameters directly inside the geometries: 
+
+
+```{r}
+# data & aesthetics
+pl <- ggplot(df,aes(x=wt,y=mpg))
+
+# geometry
+pl2 <- pl + geom_point(aes(size=hp,alpha=0.5)) # sizing points based on the number of car 'horsepower'
+
+print(pl2)
+
+```
+
+Let's size up points based on the number of car 'cylinders'. Note how we tell R that the 'cyl' variable is categorical (rather than continuous).
+
+
+```{r}
+# data & aesthetics
+pl <- ggplot(df,aes(x=wt,y=mpg))
+
+# geometry
+pl2 <- pl + geom_point(aes(size=factor(cyl),alpha=0.5))
+
+print(pl2)
+
+```
+
+However, it's typically recommended to rather define shapes for categorical variables.
+In the scatterplot below, we get a different geometric shape for each cylinder type.
+
+
+```{r}
+# data & aesthetics
+pl <- ggplot(df,aes(x=wt,y=mpg))
+
+# geometry
+pl2 <- pl + geom_point(aes(shape=factor(cyl),size=3))
+
+print(pl2)
+
+```
+
+Now let's try coloring by cylinder. So we get both shapes and colors based on the levels in the 'cylinder' variable.
+
+
+```{r}
+# data & aesthetics
+pl <- ggplot(df,aes(x=wt,y=mpg))
+
+# geometry
+pl2 <- pl + geom_point(aes(shape=factor(cyl),color=factor(cyl),size=3))
+
+print(pl2)
+```
+
+### Now let's play around with colors.
+
+First, let's color all points blue.
+
+```{r}
+# data & aesthetics
+pl <- ggplot(df,aes(x=wt,y=mpg))
+
+# geometry
+pl2 <- pl + geom_point(color='blue',size=3)
+
+print(pl2)
+
+```
+
+
+Let's define colors with HEX color values. This makes it possible to get more specific colors.
+
+Color picker websites like this one https://www.color-hex.com/ can come in handy.
+
+
+```{r}
+# data & aesthetics
+pl <- ggplot(df,aes(x=wt,y=mpg))
+
+# geometry
+pl2 <- pl + geom_point(color='#43e8d8',size=3) # teal color
+
+print(pl2)
+
+```
+
+Color points by gradient. Here for instance, we can color the scatterplot by 'horsepower', a continuous variable.
+
+
+```{r}
+# data & aesthetics
+pl <- ggplot(df,aes(x=wt,y=mpg))
+
+# geometry
+pl2 <- pl + geom_point(aes(color=hp),size=3)
+
+# we can specify the color range
+pl3 <- pl2 + scale_color_gradient(low='blue',high='red')
+
+print(pl3)
+
+```
+
+---
+## Barplots
+---
+
+Show a count when we're dealing with categorical data.
+
+Let's categorize the class of vehicles vurses the count of how many times they occur in the dataset.
+
+
+```{r}
+# use the 'mpg' data frame that's built-in ggplot2
+df <- mpg
+
+# data & aesthetics
+pl <- ggplot(df,aes(x=class))
+
+# geometry
+pl2 <- pl + geom_bar()
+
+print(pl2)
+
+```
+
+Use the bar value to add a 3rd layer of data.
+
+Let's color the bars based off the 'drive' column. This creates a stacked barplot.
+
+
+```{r}
+# data & aesthetics
+pl <- ggplot(df,aes(x=class))
+
+# geometry
+pl2 <- pl + geom_bar(aes(fill=drv))
+
+print(pl2)
+
+```
+
+Let's adjust the position adjustment inside the barplot.
+
+Here we create side-by-side bars instead of stacked bars.
+
+
+```{r}
+# data & aesthetics
+pl <- ggplot(df,aes(x=class))
+
+# geometry
+pl2 <- pl + geom_bar(aes(fill=drv),position = "dodge")
+
+print(pl2)
+
+```
+
+A different type of positioning within the barplot. Let's show percentages on the bars, rather than counts of instances.
+
+
+```{r}
+# data & aesthetics
+pl <- ggplot(df,aes(x=class))
+
+# geometry
+pl2 <- pl + geom_bar(aes(fill=drv),position = "fill")
+
+print(pl2)
+
+```
+
+---
+## Boxplots
+---
+
+We graphically depict groups of data through their quartiles.
+
+Let's create box plots of 'miles per galon' by 'cylinder' type.
+
+```{r}
+# we'll use the 'mtcars' data frame again
+df <- mtcars
+
+# data & aesthetics
+pl <- ggplot(df,aes(x=factor(cyl),y=mpg))
+
+# geometry
+pl2 <- pl + geom_boxplot()
+
+print(pl2)
+
+```
+
+Flip the coordinates of the boxplot by showing it vertically instead of horizontally.
+
+
+```{r}
+# data & aesthetics
+pl <- ggplot(df,aes(x=factor(cyl),y=mpg))
+
+# geometry
+pl2 <- pl + geom_boxplot() + coord_flip()
+
+print(pl2)
+
+```
+
+Color the boxes.
+
+
+```{r}
+# data & aesthetics
+pl <- ggplot(df,aes(x=factor(cyl),y=mpg))
+
+# geometry
+pl2 <- pl + geom_boxplot(fill='purple')
+
+print(pl2)
+
+```
+
+Color box plots based on factors of the cylinder variable.
+
+
+```{r}
+# data & aesthetics
+pl <- ggplot(df,aes(x=factor(cyl),y=mpg))
+
+# geometry
+pl2 <- pl + geom_boxplot(aes(fill=factor(cyl)))
+
+print(pl2)
+
+```
+
+Now, let's add a theme layer.
+
+
+```{r}
+# data & aesthetics
+pl <- ggplot(df,aes(x=factor(cyl),y=mpg))
+
+# geometry
+pl2 <- pl + geom_boxplot(aes(fill=factor(cyl))) + theme_light()
+
+print(pl2)
+
+```
+
+---
+## Variable Plotting
+---
+
+We'll compare two variables from the same dataset.
+
+Let's use a '2D bin' chart to plot a heatmap of movie ratings by year.
+
+```{r}
+# use the movies dataset
+library(ggplot2movies)
+
+# data & aesthetics
+pl <- ggplot(movies,aes(x=year,y=rating))
+
+# geometry: check out the '2D bin' chart
+pl2 <- pl + geom_bin2d()
+
+print(pl2)
+
+```
+
+
+Let's change the default color map. 
+
+
+```{r}
+# data & aesthetics
+pl <- ggplot(movies,aes(x=year,y=rating))
+
+# geometry: check out the '2D bin' chart
+pl2 <- pl + geom_bin2d()
+
+# we can specify the color range
+pl3 <- pl2 + scale_fill_gradient(low='green',high='red')
+
+print(pl3)
+
+```
+
+By default, the bin sizes are just c(1,1). We can Control the bin sizes.
+
+
+```{r}
+# data & aesthetics
+pl <- ggplot(movies,aes(x=year,y=rating))
+
+# geometry: check out the '2D bin' chart
+pl2 <- pl + geom_bin2d(binwidth=c(3,1))
+
+# we can specify the color range
+pl3 <- pl2 + scale_fill_gradient(low='blue',high='red')
+
+print(pl3)
+
+```
+### HEX plot
+
+We can also create a HEX plot instead of a rectangle '2d bin' chart.
+
+Note that the `geom_hex()` option requires the `hexbin` package to be installed.
+
+
+```{r}
+# install the `hexbin` package
+#install.packages("hexbin")
+
+# data & aesthetics
+pl <- ggplot(movies,aes(x=year,y=rating))
+
+# geometry: check out the '2D bin' chart
+pl2 <- pl + geom_hex()
+
+# we can specify the color range
+pl3 <- pl2 + scale_fill_gradient(low='blue',high='red')
+
+print(pl3)
+
+```
+
+### 2D Density plot
+
+
+```{r}
+# data & aesthetics
+pl <- ggplot(movies,aes(x=year,y=rating))
+
+# geometry: check out the '2D bin' chart
+pl2 <- pl + geom_density_2d()
+
+print(pl2)
+
+```
+
+---
+## Coordinates and Faceting
+---
+
+Learning to deal with coordinates will allow us to resize our plots correctly.
+
+Faceting will allow us to place multiple plots next to one another.
+
+
+### Coordinates
+
+We'll use the 'mpg' bulit-in data set to create a scatterplot.
+
+```{r}
+
+# data & aesthetics
+pl <- ggplot(mpg,aes(x=displ,y=hwy))
+
+# geometry: check out the '2D bin' chart
+pl2 <- pl + geom_point()
+
+print(pl2)
+
+```
+
+Play around with coordinates in order to set `x` and `y` limts.
+
+
+```{r}
+# data & aesthetics
+pl <- ggplot(mpg,aes(x=displ,y=hwy))
+
+# geometry: check out the '2D bin' chart
+pl2 <- pl + geom_point()
+
+# set x-y limits
+pl3 <- pl2 + coord_cartesian(xlim = c(1,4),ylim = c(13,30))
+
+print(pl3)
+
+
+```
+
+Set aspect ratio. This ratio is `1:1` by default.
+
+
+```{r}
+# data & aesthetics
+pl <- ggplot(mpg,aes(x=displ,y=hwy))
+
+# geometry: check out the '2D bin' chart
+pl2 <- pl + geom_point()
+
+# set the 'x to y' aspect ratio to 1/3
+pl3 <- pl2 + coord_fixed(ratio= 1/3) 
+
+print(pl3)
+
+```
+
+### Faceting
+
+First create a normal scatterplot.
+
+```{r}
+# data & aesthetics
+pl <- ggplot(mpg,aes(x=displ,y=hwy))
+
+# geometry: check out the '2D bin' chart
+pl2 <- pl + geom_point()
+
+print(pl2)
+
+```
+
+Now let's separate the normal scatterplot into facets based on the number of cylinders.
+
+The `.` symbol in `facet_grid()` represents everything.
+
+
+```{r}
+# data & aesthetics
+pl <- ggplot(mpg,aes(x=displ,y=hwy))
+
+# geometry: check out the '2D bin' chart
+pl2 <- pl + geom_point()
+
+# separate the normal scatterplot into facets based on the number of cylinders
+pl3 <- pl2 + facet_grid(. ~ cyl) 
+
+print(pl3)
+
+```
+
+Another example: facet by drive type.
+
+
+```{r}
+# data & aesthetics
+pl <- ggplot(mpg,aes(x=displ,y=hwy))
+
+# geometry: check out the '2D bin' chart
+pl2 <- pl + geom_point()
+
+# separate the normal scatterplot into facets based on the number of cylinders
+pl3 <- pl2 + facet_grid(drv ~ .) 
+
+print(pl3)
+
+```
+
+Facet by drive type and the number of cylinders.
+
+
+```{r}
+# data & aesthetics
+pl <- ggplot(mpg,aes(x=displ,y=hwy))
+
+# geometry: check out the '2D bin' chart
+pl2 <- pl + geom_point()
+
+# separate the normal scatterplot into facets based on the number of cylinders
+pl3 <- pl2 + facet_grid(drv ~ cyl) 
+
+print(pl3)
+
+```
+
+---
+## Themes
+--- 
+
+Themes allow us to quickly create beautiful looking graphs.
+
+
+### Using built-in themes
+
+Create a standard scatterplot.
+
+```{r}
+# use the built-in 'mtcars' dataset
+df <- mtcars
+
+# data & aesthetics
+pl <- ggplot(mtcars,aes(x=wt,y=mpg))
+
+# geometry: check out the '2D bin' chart
+pl2 <- pl + geom_point()
+
+print(pl2)
+
+```
+
+Let's apply a theme layer.
+
+We can set a theme that applies to all our plots like this:
+
+```{r}
+theme_set(theme_minimal())
+
+```
+
+Now let's re-plot our basic scatter plot.
+
+```{r}
+# data & aesthetics
+pl <- ggplot(mtcars,aes(x=wt,y=mpg))
+
+# geometry: check out the '2D bin' chart
+pl2 <- pl + geom_point()
+
+print(pl2)
+
+```
+
+Instead, we can manually set a theme for each plot.
+
+
+```{r}
+# data & aesthetics
+pl <- ggplot(mtcars,aes(x=wt,y=mpg))
+
+# geometry: check out the '2D bin' chart
+pl2 <- pl + geom_point()
+
+# set theme manually
+pl3 <- pl2 + theme_dark()
+
+print(pl3)
+
+```
+
+### Accessing more theme options
+
+We can install more themes by installing and calling the `ggthemes` package.
+
+
+```{r}
+#install.packages("ggthemes")
+
+library(ggthemes)
+
+```
+
+
+Now we can access additional themes, like the Economist's publications.
+
+
+```{r}
+
+# data & aesthetics
+pl <- ggplot(mtcars,aes(x=wt,y=mpg))
+
+# geometry: check out the '2D bin' chart
+pl2 <- pl + geom_point()
+
+# set theme manually
+pl3 <- pl2 + theme_economist()
+
+print(pl3)
+
+```
+
+Imitate the style of the 'fivethirtyeight' blog.
+
+
+```{r}
+
+# data & aesthetics
+pl <- ggplot(mtcars,aes(x=wt,y=mpg))
+
+# geometry: check out the '2D bin' chart
+pl2 <- pl + geom_point()
+
+# set theme manually
+pl3 <- pl2 + theme_fivethirtyeight()
+
+print(pl3)
+
+```
+
+Try the Wall Street Journal theme.
+
+
+```{r}
+
+# data & aesthetics
+pl <- ggplot(mtcars,aes(x=wt,y=mpg))
+
+# geometry: check out the '2D bin' chart
+pl2 <- pl + geom_point()
+
+# set theme manually
+pl3 <- pl2 + theme_wsj()
+
+print(pl3)
+
+```
+
+
+---
+## ggplot2 Exercises 
+---
+
+For the first few plots, use the mpg dataset.
+
+
+```{r}
+# call necessary libraries
+# library(ggplot2)
+# library(ggthemes)
+
+# preview the 'mpg' dataset
+head(mpg)
+
+```
+
+
+Ex1: Histogram of hwy mpg values:
+
+
+```{r}
+# data & aesthetics
+pl <- ggplot(mpg,aes(x=hwy))
+
+# geometry
+#pl2 <- pl + geom_histogram(binwidth = 0.1, color='red',fill='pink',alpha=0.4)
+pl2 <- pl + geom_histogram(fill='red',alpha=0.5)
+
+# add labels
+#pl3 <- pl2 + xlab('Highway') + ylab('Count')
+
+print(pl2)
+
+```
+
+Ex2: Barplot of car counts per manufacturer with color fill defined by cyl count.
+
+
+```{r}
+# data & aesthetics
+pl <- ggplot(mpg,aes(x=manufacturer))
+
+# geometry
+#pl2 <- pl + geom_bar(aes(fill=factor(cyl)),position = "fill")
+pl2 <- pl + geom_bar(aes(fill=factor(cyl)))
+
+# rotate labels by 90 degrees on x-asis for readability
+pl3 <- pl2 + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
+print(pl3)
+```
+
+Switch now to use the txhousing dataset that comes with ggplot2
+
+
+```{r}
+
+head(txhousing)
+
+```
+
+
+Ex3: Create a scatterplot of volume versus sales. Afterwards, play around with alpha and color arguments to clarify information.
+
+
+```{r}
+# data & aesthetics
+pl <- ggplot(txhousing,aes(x=sales,y=volume))
+
+# geometry
+#pl2 <- pl + geom_point(aes(shape=factor(cyl),color=factor(cyl),size=3))
+pl2 <- pl + geom_point(color="blue",alpha=0.2) + theme_gray()
+
+print(pl2)
+
+```
+
+
+Ex4.: Add a smooth fit line to the scatterplot from above. Hint: You may need to look up `geom_smooth()`
+
+
+```{r}
+# data & aesthetics
+pl <- ggplot(txhousing,aes(x=sales,y=volume))
+
+# geometry
+#pl2 <- pl + geom_point(aes(shape=factor(cyl),color=factor(cyl),size=3))
+pl2 <- pl + geom_point(color="blue",alpha=0.2) + theme_gray()
+
+# add a smooth fit line
+#pl3 <- pl2 + geom_smooth(method = 'loess',color="red",size=1.5)
+pl3 <- pl2 + geom_smooth(color="red",size=1.5,se=TRUE)
+
+print(pl3)
+
+```
